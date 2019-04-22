@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!--这里有个坑，就是各个path的name不能设成一样的，这样会导致FileProvider无法识别，抛出异常java.lang.IllegalArgumentException: Failed to find configured root that contains -->
+    <!--path表示对应目录下的子目录，name表示path对应的别名，通过别名伪装，增加安全性-->
+    <!--相当于getFilesDir()-->
+    <files-path
+        name="ip_pic"
+        path="pictures"/>
+    <!--getCacheDir()-->
+    <cache-path
+        name="cp_pic"
+        path="pictures"/>
+    <!--getExternalFilesDir()-->
+    <external-files-path
+        name="efp_pic"
+        path="pictures"/>
+    <!--getExternalCacheDir()-->
+    <external-cache-path
+        name="ecp_pic"
+        path="pictures"/>
+    <!--Environment.getExternalStorageDirectory()-->
+    <external-path
+        name="ep_pic"
+        path="SuperCamera"/>
+</paths>
