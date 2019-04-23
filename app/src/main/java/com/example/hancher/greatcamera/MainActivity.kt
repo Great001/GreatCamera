@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
         private val RC_IMAGE_CAPTURE = 1111
         private val RC_VIDEO_CAPTURE = 1112
         private val RC_IMAGE_CROP = 1113
+        private val RC_CAMERA = 1114
 
         private val ACTION_IMAGE_CROP = "com.android.camera.action.CROP"
     }
@@ -44,7 +45,17 @@ class MainActivity : AppCompatActivity() {
         tv_goto_imagee_crop.setOnClickListener {
             gotoImageCrop()
         }
+
+        tv_goto_camera.setOnClickListener{
+            gotoCamera()
+        }
     }
+
+    private fun gotoCamera(){
+        val intent = Intent(this, CameraActivity::class.java)
+        startActivityForResult(intent, RC_CAMERA)
+    }
+
 
     /**
      * 系统相机拍照
@@ -136,6 +147,8 @@ class MainActivity : AppCompatActivity() {
                 if (uri != null) {
                     Loger.d("裁剪返回Uri = $uri")
                 }
+            } else if(requestCode == RC_CAMERA){
+                Loger.d("拍摄页返回")
             }
         }
     }

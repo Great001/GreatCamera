@@ -39,4 +39,15 @@
         android:text="系统相机裁剪"
         android:textColor="#FFFFFF"
         app:layout_constraintTop_toBottomOf="@+id/tv_goto_video_capture"/>
+
+    <TextView
+        android:id="@+id/tv_goto_camera"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/bg_gray"
+        android:gravity="center"
+        android:text="开启自定义相机"
+        android:textColor="#FFFFFF"
+        app:layout_constraintTop_toBottomOf="@+id/tv_goto_imagee_crop"/>
 </android.support.constraint.ConstraintLayout>
