@@ -20,6 +20,7 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
 
     companion object {
         private val RC_CAMERA = 1120
+        private val RC_AUDIO = 1121
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,13 +28,10 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
         //设置全屏模式
 //        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
         setContentView(R.layout.activity_camera)
+
         switchCameraView.setOnClickListener {
             picShowView.visibility = View.GONE
             SuperCamera.instance().toggleCamera()
-        }
-        switchCameraView.setOnLongClickListener {
-            picShowView.visibility = View.GONE
-            true
         }
 
         shotButton.setOnClickListener {
@@ -50,11 +48,23 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
             })
         }
 
+        recordBtn.setOnClickListener {
+            if (!SuperCamera.instance().isRecording()) {
+                picShowView.visibility = View.GONE
+                recordBtn.text = "..."
+                SuperCamera.instance().recordVideo()
+            } else {
+                SuperCamera.instance().stopRecord()
+                recordBtn.text = "record"
+            }
+        }
+
         saveView.setOnClickListener {
             picShowView.visibility = View.GONE
             saveView.visibility = View.GONE
             SuperCamera.instance().openCamera(false, surfaceView)
         }
+
         surfaceView.holder.addCallback(this)
     }
 
@@ -74,7 +84,7 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
 
     override fun surfaceCreated(holder: SurfaceHolder?) {
         Loger.d("SurfaceCreated")
-        if (checkToRequestPermissions()) {
+        if (checkToRequestCamerePermission() && checkToRequestMicPermission()) {
             SuperCamera.instance().openCamera(false, surfaceView)
         }
     }
@@ -103,12 +113,24 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
     }
 
     /**
-     * 动态权限申请
+     * 动态权限相机申请
      */
-    private fun checkToRequestPermissions(): Boolean {
+    private fun checkToRequestCamerePermission(): Boolean {
         //要想在SD中创建文件，必须动态申请文件读写读写权限
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), RC_CAMERA)
+            return false
+        }
+        return true
+    }
+
+    /**
+     * 动态权限相机申请
+     */
+    private fun checkToRequestMicPermission(): Boolean {
+        //要想在SD中创建文件，必须动态申请文件读写读写权限
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.RECORD_AUDIO), RC_CAMERA)
             return false
         }
         return true

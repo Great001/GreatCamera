@@ -1,7 +1,10 @@
 package com.example.hancher.greatcamera
 
 import android.hardware.Camera
+import android.media.MediaMuxer
+import android.media.MediaRecorder
 import android.view.SurfaceView
+import java.io.File
 
 /**
  * 相机
@@ -10,6 +13,7 @@ import android.view.SurfaceView
 class SuperCamera private constructor() {
 
     companion object {
+
         @Volatile
         private var instance: SuperCamera? = null
 
@@ -24,15 +28,18 @@ class SuperCamera private constructor() {
         printCameraInfo()
     }
 
+    //拍照
     private var camera: Camera? = null
     private var isFront: Boolean = false
     private var cameraOrientation: Int = 0
 
-    private var preview: SurfaceView? = null
+
+    //录像
+    private var recorder: MediaRecorder? = null
+    private var isRecording: Boolean = false
 
     fun openCamera(isFront: Boolean, surfaceView: SurfaceView) {
         this.isFront = isFront
-        preview = surfaceView
         val facing = if (isFront) Camera.CameraInfo.CAMERA_FACING_FRONT else Camera.CameraInfo.CAMERA_FACING_BACK
         //可能会阻塞，最好放在异步线程中
         val cameraInfo = Camera.CameraInfo()
@@ -59,10 +66,10 @@ class SuperCamera private constructor() {
         camera?.startPreview()
     }
 
-    fun toggleCamera() {
+    fun toggleCamera(preview: SurfaceView) {
         if (camera != null) {
             closeCamera()
-            openCamera(!isFront, preview!!)
+            openCamera(!isFront, preview)
         }
     }
 
@@ -77,6 +84,61 @@ class SuperCamera private constructor() {
         camera?.release()
         camera = null
     }
+
+    fun recordVideo() {
+        val outputFile = File(FolderHelper.getCurVideoSavePath())
+        val parentFile = outputFile.parentFile
+        if (!parentFile.exists()) {
+            parentFile.mkdirs()
+        }
+        if (outputFile.exists()) {
+            outputFile.delete()
+        }
+        outputFile.createNewFile()
+        try {
+            recorder = MediaRecorder()
+            //必须停止预览
+            camera?.stopPreview()
+            camera?.unlock()
+            recorder?.setCamera(camera)
+            //下面三行代码顺序不能改
+            recorder?.setVideoSource(MediaRecorder.VideoSource.CAMERA)
+            recorder?.setAudioSource(MediaRecorder.AudioSource.MIC)
+            recorder?.setOutputFormat(MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            recorder?.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+            recorder?.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+            recorder?.setAudioChannels(2)
+            recorder?.setAudioSamplingRate(44100)
+            recorder?.setVideoSize(960, 720)
+            recorder?.setVideoFrameRate(25)
+            recorder?.setOutputFile(outputFile.absolutePath)
+            recorder?.prepare()
+
+            recorder?.start()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            //必须及时释放相机资源，不然一直占用，导致相机都不能用啦！！！
+            recorder?.release()
+            recorder = null
+            isRecording = false
+        }
+        isRecording = true
+        Loger.d("开始录像")
+    }
+
+    fun stopRecord() {
+        if (!isRecording) {
+            return
+        }
+        recorder?.stop()
+        recorder?.release()
+        recorder = null
+        isRecording = false
+        Loger.d("停止录像")
+    }
+
+    fun isRecording() = isRecording
+
 
     private fun printCameraInfo() {
         //获取摄像头个数,对应的cameraId在0-（cameraNum-1）

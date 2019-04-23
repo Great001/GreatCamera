@@ -11,9 +11,10 @@ import java.text.SimpleDateFormat
 object FolderHelper {
 
     private val APP_DIR = "SuperCamera"
-    private val PIC_DIR = "DCIM"
+    private val PIC_DIR = "Pictures"
+    private val VIDEO_DIR = "Videos"
 
-    fun getPicSaveDir(): String {
+    fun getExternalAppDir(): File {
         val folder: File
         if (Environment.MEDIA_MOUNTED == Environment.getExternalStorageState()) {
             folder = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + APP_DIR)
@@ -28,11 +29,24 @@ object FolderHelper {
                 folder.mkdir()
             }
         }
-        return folder.absolutePath
+        return folder
+    }
+
+    fun getPicSaveDir(): String {
+        return getExternalAppDir().absolutePath + File.separator + PIC_DIR
+    }
+
+    fun getVideoSaveDir(): String {
+        return getExternalAppDir().absolutePath + File.separator + VIDEO_DIR
     }
 
     fun getCurPicSavePath(): String {
         return getPicSaveDir() + File.separator + formatTime(System.currentTimeMillis()) + ".jpg"
+    }
+
+
+    fun getCurVideoSavePath(): String {
+        return getVideoSaveDir() + File.separator + formatTime(System.currentTimeMillis()) + ".MP4"
     }
 
     /**

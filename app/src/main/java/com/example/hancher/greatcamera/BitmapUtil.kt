@@ -19,6 +19,10 @@ object BitmapUtil {
             return
         }
         val saveFile = File(savePath)
+        val parentFile = saveFile.parentFile
+        if (!parentFile.exists()) {
+            parentFile.mkdirs()
+        }
         if (saveFile.exists()) {
             saveFile.delete()
         }
