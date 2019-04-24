@@ -49,13 +49,13 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
         }
 
         recordBtn.setOnClickListener {
-            if(SuperCamera.instance().isCameraAvailable()){
+            if (SuperCamera.instance().isCameraAvailable()) {
                 if (!SuperCamera.instance().isRecording()) {
                     picShowView.visibility = View.GONE
                     recordBtn.text = "..."
-                    SuperCamera.instance().recordVideo()
+                    SuperCamera.instance().recordVideoWithEncoder()
                 } else {
-                    SuperCamera.instance().stopRecord()
+                    SuperCamera.instance().stopRecordVideoWithEncoder()
                     recordBtn.text = "record"
                 }
             }
@@ -64,7 +64,7 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
         saveView.setOnClickListener {
             picShowView.visibility = View.GONE
             saveView.visibility = View.GONE
-            SuperCamera.instance().openCamera(false, surfaceView)
+            SuperCamera.instance().openCamera(false, true, surfaceView)
         }
 
         surfaceView.holder.addCallback(this)
@@ -87,7 +87,7 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
     override fun surfaceCreated(holder: SurfaceHolder?) {
         Loger.d("SurfaceCreated")
         if (checkToRequestCamerePermission() && checkToRequestMicPermission()) {
-            SuperCamera.instance().openCamera(false, surfaceView)
+            SuperCamera.instance().openCamera(false, true, surfaceView)
         }
     }
 
@@ -107,7 +107,7 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
             permissions.forEachIndexed { index, s ->
                 if (permissions[index] == (Manifest.permission.CAMERA) && grantResults[index] == PackageManager.PERMISSION_GRANTED) {
                     Loger.d("相机权限申请成功")
-                    SuperCamera.instance().openCamera(false, surfaceView)
+                    SuperCamera.instance().openCamera(false, true, surfaceView)
                     return@forEachIndexed
                 }
             }

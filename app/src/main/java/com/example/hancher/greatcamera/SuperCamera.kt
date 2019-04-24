@@ -1,6 +1,9 @@
 package com.example.hancher.greatcamera
 
+import android.graphics.ImageFormat
 import android.hardware.Camera
+import android.media.MediaCodecInfo
+import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.media.MediaRecorder
 import android.view.SurfaceView
@@ -35,10 +38,27 @@ class SuperCamera private constructor() {
 
 
     //录像
+    //方案1：MediaRecorder
     private var recorder: MediaRecorder? = null
     private var isRecording: Boolean = false
 
+    //方案2：MediaCodec编码，数据源PreviewCallback
+    private var encoder: Encoder? = null
+    private var encodeStartTime: Long = 0
+
+    private val previewCallback = Camera.PreviewCallback { data, camera ->
+        //Loger.d("onPreviewFrame回调")
+        camera.addCallbackBuffer(data)
+
+        val presentationTimeUS = (System.currentTimeMillis() - encodeStartTime) * 1000
+        encoder?.drainData(data, presentationTimeUS)
+    }
+
     fun openCamera(isFront: Boolean, surfaceView: SurfaceView) {
+        openCamera(isFront, false, surfaceView)
+    }
+
+    fun openCamera(isFront: Boolean, withCallback: Boolean, surfaceView: SurfaceView) {
         this.isFront = isFront
         val facing = if (isFront) Camera.CameraInfo.CAMERA_FACING_FRONT else Camera.CameraInfo.CAMERA_FACING_BACK
         //可能会阻塞，最好放在异步线程中
@@ -48,14 +68,20 @@ class SuperCamera private constructor() {
         camera = Camera.open(facing)
         val parameters = camera!!.parameters
         printCameraParameters(parameters)
-        val previewSize = parameters.previewSize
-        parameters.setPictureSize(previewSize.width, previewSize.height)
+        //设置预览尺寸，优先1920*1080
+        val previewSize = choosePreviewSize(parameters)
+        parameters.setPreviewSize(previewSize.width, previewSize.height)
+        //设置照片尺寸，优先1920*1080
+        val pictureSize = choosePictureSize(parameters)
+        parameters.setPictureSize(pictureSize.width, pictureSize.height)
+        //设置预览帧率，控制在25帧内
+        val previewFps = choosePreviewFpsRange(parameters)
+        parameters.setPreviewFpsRange(previewFps[0], previewFps[1])
         if (isFront) {
             parameters.setRotation(cameraOrientation)
         } else {
             parameters.setRotation(cameraOrientation)
         }
-
         camera?.parameters = parameters
         if (isFront) {
             camera?.setDisplayOrientation(360 - cameraOrientation)
@@ -63,6 +89,15 @@ class SuperCamera private constructor() {
             camera?.setDisplayOrientation(cameraOrientation)
         }
         camera?.setPreviewDisplay(surfaceView.holder)
+        if (withCallback) {
+            //设置预览回调
+            val bufferSize = previewSize.width * previewSize.height * (ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8f)
+            for (i in 0..1) {
+                val byteArray = ByteArray(bufferSize.toInt())
+                camera?.addCallbackBuffer(byteArray)
+            }
+            camera?.setPreviewCallbackWithBuffer(previewCallback)
+        }
         camera?.startPreview()
     }
 
@@ -120,13 +155,16 @@ class SuperCamera private constructor() {
             recorder?.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
             recorder?.setAudioChannels(2)
             recorder?.setAudioSamplingRate(44100)
+            //视频宽高一定要是相机支持的
             if (videoSize != null) {
                 recorder?.setVideoSize(videoSize.width, videoSize.height)
             } else {
                 recorder?.setVideoSize(1920, 1080)
             }
+            //帧率25fps可以了
             recorder?.setVideoFrameRate(25)
-            recorder?.setVideoEncodingBitRate(2000000)
+            //位率大概设5M/s，低于这个值清晰度很难保证
+            recorder?.setVideoEncodingBitRate(5000000)
             recorder?.setOutputFile(outputFile.absolutePath)
             recorder?.prepare()
             recorder?.start()
@@ -163,14 +201,61 @@ class SuperCamera private constructor() {
             recorder = null
             isRecording = false
         }
+    }
 
+    fun recordVideoWithEncoder() {
+        try {
+            //mime:"video/avc" 兼容性比较好
+            val videoFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080)
+            //选择颜色格式，注意兼容性
+            videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible)
+            videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25)
+            videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5)
+            videoFormat.setInteger(MediaFormat.KEY_BIT_RATE, 8000000)
 
+            encoder = Encoder(videoFormat)
+            encoder?.start()
+            encodeStartTime = System.currentTimeMillis()
+            isRecording = true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            closeCamera()
+        }
+    }
+
+    fun stopRecordVideoWithEncoder() {
+        try {
+            encoder?.stop()
+            isRecording = false
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun isRecording() = isRecording
 
     fun isCameraAvailable(): Boolean {
         return camera != null
+    }
+
+    private fun choosePreviewSize(parameters: Camera.Parameters): Camera.Size {
+        val supportPreviewSize = parameters.supportedPreviewSizes
+        supportPreviewSize.forEach {
+            if (it.width == 1920 && it.height == 1080) {
+                return it
+            }
+        }
+        return parameters.previewSize
+    }
+
+    private fun choosePictureSize(parameters: Camera.Parameters): Camera.Size {
+        val supportPictureSize = parameters.supportedPictureSizes
+        supportPictureSize.forEach {
+            if (it.width == 1920 && it.height == 1080) {
+                return it
+            }
+        }
+        return parameters.pictureSize
     }
 
     private fun chooseEncodeVideoSize(parameters: Camera.Parameters): Camera.Size? {
@@ -185,6 +270,17 @@ class SuperCamera private constructor() {
             return null
         }
         return supportVideoSize[0]
+    }
+
+    private fun choosePreviewFpsRange(parameters: Camera.Parameters): IntArray {
+        val supportFpsRange = parameters.supportedPreviewFpsRange
+        supportFpsRange.forEach {
+            if (it[0] > 0 && it[1] <= 30)
+                return it
+        }
+        val range = IntArray(2)
+        parameters.getPreviewFpsRange(range)
+        return range
     }
 
 
@@ -225,6 +321,10 @@ class SuperCamera private constructor() {
         val supportPictureFormats = parameters.supportedPictureFormats
         supportPictureFormats.forEach {
             Loger.d("SupportPictureFormats: = $it")
+        }
+        val supportPreviewFormats = parameters.supportedPreviewFormats
+        supportPreviewFormats.forEach {
+            Loger.d("SupportPreviewFormats: = $it")
         }
     }
 
