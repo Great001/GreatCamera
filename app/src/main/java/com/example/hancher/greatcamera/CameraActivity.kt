@@ -31,7 +31,7 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
 
         switchCameraView.setOnClickListener {
             picShowView.visibility = View.GONE
-            SuperCamera.instance().toggleCamera()
+            SuperCamera.instance().toggleCamera(surfaceView)
         }
 
         shotButton.setOnClickListener {
@@ -49,13 +49,15 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
         }
 
         recordBtn.setOnClickListener {
-            if (!SuperCamera.instance().isRecording()) {
-                picShowView.visibility = View.GONE
-                recordBtn.text = "..."
-                SuperCamera.instance().recordVideo()
-            } else {
-                SuperCamera.instance().stopRecord()
-                recordBtn.text = "record"
+            if(SuperCamera.instance().isCameraAvailable()){
+                if (!SuperCamera.instance().isRecording()) {
+                    picShowView.visibility = View.GONE
+                    recordBtn.text = "..."
+                    SuperCamera.instance().recordVideo()
+                } else {
+                    SuperCamera.instance().stopRecord()
+                    recordBtn.text = "record"
+                }
             }
         }
 
