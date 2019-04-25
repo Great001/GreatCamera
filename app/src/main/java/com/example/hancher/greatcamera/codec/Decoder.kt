@@ -157,6 +157,10 @@ class Decoder {
                             val flags = extractor!!.sampleFlags
                             decoder?.queueInputBuffer(inputBufferIndex, 0, size, presentationTimeUs, flags)
                             extractor?.advance()
+                            //快速播放，跳帧
+//                            for (i in 0 until 2) {
+//                                extractor?.advance()
+//                            }
                             Loger.d("读取填充一帧数据")
                         } else {
                             Loger.d("数据读取完毕")
@@ -185,6 +189,8 @@ class Decoder {
                         }
                         Loger.d("解码器：解码出一帧数据:$outputBufferIndex")
                         decoder?.releaseOutputBuffer(outputBufferIndex, true)
+                        //慢速播放
+//                        Thread.sleep(10)
                     }
                 }
 
