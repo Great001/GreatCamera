@@ -1,4 +1,4 @@
-package com.example.hancher.greatcamera
+package com.example.hancher.greatcamera.utils
 
 import android.graphics.Bitmap
 import java.io.File

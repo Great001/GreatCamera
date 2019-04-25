@@ -1,4 +1,4 @@
-package com.example.hancher.greatcamera
+package com.example.hancher.greatcamera.activity
 
 import android.app.Activity
 import android.content.Intent
@@ -14,6 +14,8 @@ import android.support.v4.content.ContextCompat
 import android.support.v4.content.FileProvider
 import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
+import com.example.hancher.greatcamera.R
+import com.example.hancher.greatcamera.utils.Loger
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -46,16 +48,29 @@ class MainActivity : AppCompatActivity() {
             gotoImageCrop()
         }
 
-        tv_goto_camera.setOnClickListener{
-            gotoCamera()
+        tv_goto_camera.setOnClickListener {
+            gotoCamera(false)
+        }
+
+        tv_goto_camera_encode.setOnClickListener {
+            gotoCamera(true)
+        }
+
+        tv_goto_video_player.setOnClickListener {
+            gotoVideoPlayer()
         }
     }
 
-    private fun gotoCamera(){
+    private fun gotoCamera(userEncoder:Boolean) {
         val intent = Intent(this, CameraActivity::class.java)
+        intent.putExtra(CameraActivity.KEY_USE_ENCODER,userEncoder)
         startActivityForResult(intent, RC_CAMERA)
     }
 
+    private fun gotoVideoPlayer() {
+        val intent = Intent(this, VideoPlayerActivity::class.java)
+        startActivity(intent)
+    }
 
     /**
      * 系统相机拍照
@@ -147,7 +162,7 @@ class MainActivity : AppCompatActivity() {
                 if (uri != null) {
                     Loger.d("裁剪返回Uri = $uri")
                 }
-            } else if(requestCode == RC_CAMERA){
+            } else if (requestCode == RC_CAMERA) {
                 Loger.d("拍摄页返回")
             }
         }

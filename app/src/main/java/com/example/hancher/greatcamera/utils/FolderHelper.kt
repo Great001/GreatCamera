@@ -1,6 +1,7 @@
-package com.example.hancher.greatcamera
+package com.example.hancher.greatcamera.utils
 
 import android.os.Environment
+import com.example.hancher.greatcamera.GreatApp
 import java.io.File
 import java.text.SimpleDateFormat
 

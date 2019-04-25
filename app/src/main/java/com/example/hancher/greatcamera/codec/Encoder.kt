@@ -1,4 +1,4 @@
-package com.example.hancher.greatcamera
+package com.example.hancher.greatcamera.codec
 
 import android.annotation.TargetApi
 import android.media.MediaCodec
@@ -6,6 +6,9 @@ import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.os.Build
+import com.example.hancher.greatcamera.utils.Loger
+import com.example.hancher.greatcamera.utils.ColorFormatTransformer
+import com.example.hancher.greatcamera.utils.FolderHelper
 import java.io.File
 
 /**

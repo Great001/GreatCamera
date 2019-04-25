@@ -1,4 +1,4 @@
-package com.example.hancher.greatcamera
+package com.example.hancher.greatcamera.activity
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -11,6 +11,10 @@ import android.support.v4.app.FragmentActivity
 import android.support.v4.content.ContextCompat
 import android.view.SurfaceHolder
 import android.view.View
+import com.example.hancher.greatcamera.R
+import com.example.hancher.greatcamera.camera.SuperCamera
+import com.example.hancher.greatcamera.utils.BitmapUtil
+import com.example.hancher.greatcamera.utils.Loger
 import kotlinx.android.synthetic.main.activity_camera.*
 
 /**
@@ -21,13 +25,19 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
     companion object {
         private val RC_CAMERA = 1120
         private val RC_AUDIO = 1121
+
+        val KEY_USE_ENCODER = "user_encoder"
     }
+
+    private var userEncoder = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //设置全屏模式
 //        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
         setContentView(R.layout.activity_camera)
+
+        userEncoder = intent.getBooleanExtra(KEY_USE_ENCODER, false)
 
         switchCameraView.setOnClickListener {
             picShowView.visibility = View.GONE
@@ -53,10 +63,18 @@ class CameraActivity : FragmentActivity(), SurfaceHolder.Callback {
                 if (!SuperCamera.instance().isRecording()) {
                     picShowView.visibility = View.GONE
                     recordBtn.text = "..."
-                    SuperCamera.instance().recordVideoWithEncoder()
+                    if (userEncoder) {
+                        SuperCamera.instance().recordVideoWithEncoder()
+                    } else {
+                        SuperCamera.instance().recordVideo()
+                    }
                 } else {
-                    SuperCamera.instance().stopRecordVideoWithEncoder()
                     recordBtn.text = "record"
+                    if (userEncoder) {
+                        SuperCamera.instance().stopRecordVideoWithEncoder()
+                    } else {
+                        SuperCamera.instance().stopRecord()
+                    }
                 }
             }
         }
