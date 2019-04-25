@@ -39,7 +39,7 @@ class Decoder {
 
     private var decodeThread: Thread? = null
 
-    private var playCompleteListener:OnPlayCompleteListener? = null
+    private var playCompleteListener: OnPlayCompleteListener? = null
 
     init {
         initMediaExtractor()
@@ -91,7 +91,7 @@ class Decoder {
     }
 
     fun resume() {
-        if(endOfStream){
+        if (endOfStream) {
             Loger.d("已经播完了")
             return
         }
@@ -149,13 +149,25 @@ class Decoder {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 if (!endOfStream) {
                     val inputBufferIndex = decoder?.dequeueInputBuffer(TIME_OUT)!!
+//                    val inputBufferIndex2 = decoder?.dequeueInputBuffer(50000)!!
                     if (inputBufferIndex >= 0) {
                         val inputBuffer = decoder?.getInputBuffer(inputBufferIndex)!!
                         val size = extractor?.readSampleData(inputBuffer, 0)!!
+                        //慢速编码考虑加帧
+//                        if (inputBufferIndex2 >= 0) {
+//                            val inputBuffer2 = decoder?.getInputBuffer(inputBufferIndex2)!!
+//                            extractor?.readSampleData(inputBuffer2, 0)!!
+//                        }
+//                        extractor?.readSampleData(inputBuffer, 0)!!
+
                         if (size >= 0) {
                             val presentationTimeUs = extractor!!.sampleTime
                             val flags = extractor!!.sampleFlags
                             decoder?.queueInputBuffer(inputBufferIndex, 0, size, presentationTimeUs, flags)
+//                            if (inputBufferIndex2 >= 0) {
+//                                Loger.d("添加第2帧重复帧")
+//                                decoder?.queueInputBuffer(inputBufferIndex2, 0, size, presentationTimeUs, flags)
+//                            }
                             extractor?.advance()
                             //快速播放，跳帧
 //                            for (i in 0 until 2) {
@@ -198,11 +210,11 @@ class Decoder {
         }
     }
 
-    fun setOnPlayCompleteListener(listener: OnPlayCompleteListener){
+    fun setOnPlayCompleteListener(listener: OnPlayCompleteListener) {
         this.playCompleteListener = listener
     }
 
-    interface OnPlayCompleteListener{
+    interface OnPlayCompleteListener {
         fun onPlayComplete()
     }
 
