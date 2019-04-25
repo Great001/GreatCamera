@@ -163,6 +163,8 @@ class Decoder {
                         if (size >= 0) {
                             val presentationTimeUs = extractor!!.sampleTime
                             val flags = extractor!!.sampleFlags
+                            val isKey = flags == MediaCodec.BUFFER_FLAG_KEY_FRAME
+                            Loger.d("是否关键帧 ：$isKey,Size: $size")
                             decoder?.queueInputBuffer(inputBufferIndex, 0, size, presentationTimeUs, flags)
 //                            if (inputBufferIndex2 >= 0) {
 //                                Loger.d("添加第2帧重复帧")
@@ -199,7 +201,9 @@ class Decoder {
                             playCompleteListener?.onPlayComplete()
                             return@Runnable
                         }
-                        Loger.d("解码器：解码出一帧数据:$outputBufferIndex")
+                        val bufferSize = bufferInfo.size
+                        val isKeyFrame = bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME
+                        Loger.d("解码器：解码出一帧数据:$outputBufferIndex,是否关键帧：$isKeyFrame ,大小：$bufferSize")
                         decoder?.releaseOutputBuffer(outputBufferIndex, true)
                         //慢速播放
 //                        Thread.sleep(10)
